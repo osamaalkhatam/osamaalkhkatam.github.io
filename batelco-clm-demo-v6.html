@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Batelco by Beyon — CLM Demo (v6)</title>
+
+<!-- Brand font (fallbacks if offline) -->
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
+<!-- Brand CSS (if present alongside this file) -->
+<link rel="stylesheet" href="upgrade_package.css">
+
+<style>
+/* ===== Brand tokens (from Digital Sheet) ===== */
+:root{
+  --navy:#202945; --red:#D50037; --indigo:#4F55EB; --grey:#E5E1E6;
+  --grey60:#B9B8BB; --grey80:#CFCCD0; --green:#52AE93; --error:#FF4F41;
+  --bg:#F5F3F5; --white:#fff; --radius:12px; --shadow:0 6px 20px rgba(32,41,69,.06);
+  --text:#202945;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font:15px/1.45 "Kanit", system-ui, -apple-system, Segoe UI, Roboto, Arial;
+}
+
+/* ---- Top bar ---- */
+header{
+  position:sticky; top:0; z-index:50;
+  display:flex; align-items:center; gap:16px; justify-content:space-between;
+  padding:10px 16px; background:var(--white); border-bottom:1px solid var(--grey);
+}
+.brand{display:flex; align-items:center; gap:10px; font-weight:600; letter-spacing:.2px;}
+.brand img{height:26px}
+.actions{display:flex; align-items:center; gap:8px}
+
+/* Buttons */
+.btn{
+  display:inline-flex; align-items:center; gap:8px; padding:8px 14px;
+  border-radius:30px; border:1px solid var(--navy); background:transparent; color:var(--navy);
+  text-decoration:none; cursor:pointer; transition:all .2s ease; font-weight:600;
+}
+.btn:hover{background:#dfe2ea}
+.btn-solid{
+  border:none; color:#fff; background:linear-gradient(45deg, rgba(32,41,69,1) 65%, rgba(213,0,55,1) 100%);
+}
+.btn-solid:hover{background:linear-gradient(45deg, var(--red) 65%, var(--red) 100%)}
+.btn:disabled{background:#D9D5DB; color:#8E8E8E; border-color:#D9D5DB; cursor:not-allowed}
+
+/* Inputs */
+input, select, textarea{
+  width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--navy);
+  background:#F5F3F5; color:var(--text); outline:none;
+}
+textarea{min-height:84px; resize:vertical}
+input::placeholder, textarea::placeholder{color:#8E8E8E}
+input:focus, select:focus, textarea:focus{border-color:var(--indigo); box-shadow:0 0 0 3px rgba(79,85,235,.15)}
+
+/* Shell */
+.shell{display:grid; grid-template-columns: 260px 1fr; min-height:calc(100vh - 60px)}
+
+/* Sidebar */
+aside{background:var(--white); border-right:1px solid var(--grey); padding:16px 10px}
+nav h5{margin:6px 12px; font-size:12px; text-transform:uppercase; color:#6b7280; letter-spacing:.08em}
+nav a{
+  display:flex; align-items:center; gap:10px; padding:10px 12px; margin:6px 6px; border-radius:10px;
+  text-decoration:none; color:var(--text);
+}
+nav a.active{background:var(--grey); color:var(--text); font-weight:600}
+nav a:hover{background:#ECEAF0}
+
+/* Main */
+main{padding:20px}
+
+/* Cards & tiles */
+.kpis{display:grid; grid-template-columns: repeat(4, minmax(160px,1fr)); gap:12px; margin-bottom:16px}
+.tile{
+  background:var(--white); border:1px solid var(--grey); border-radius:var(--radius); padding:14px; box-shadow:var(--shadow);
+}
+.tile small{display:block; color:#6b7280}
+.tile b{display:block; margin-top:6px; font-size:22px}
+.tile svg{display:block; margin-top:10px}
+
+/* Charts */
+.spark{width:100%; height:40px}
+.donut{width:86px; height:86px}
+
+/* Content */
+.card{background:var(--white); border:1px solid var(--grey); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow)}
+.section{margin:16px 0}
+.list{display:flex; flex-direction:column; gap:10px}
+.row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:10px; border:1px solid var(--grey); border-radius:10px; background:#fff;
+}
+.meta{display:flex; flex-direction:column}
+.badge{
+  font-size:12px; padding:3px 8px; border-radius:999px; border:1px solid var(--grey80); color:#586074; background:#fff;
+}
+.badge.ok{border-color:#a6e0cc; color:#1b6a53; background:#ecf9f4}
+.badge.warn{border-color:#f4d3a2; color:#7a5418; background:#fff7ec}
+.badge.danger{border-color:#ffc9c5; color:#7a1e1a; background:#fff1ef}
+
+/* Grid helpers */
+.grid{display:grid; gap:12px}
+.grid.cols-2{grid-template-columns: repeat(2, 1fr)}
+.grid.cols-3{grid-template-columns: repeat(3, 1fr)}
+.grid.cols-4{grid-template-columns: repeat(4, 1fr)}
+
+/* Tables */
+table{width:100%; border-collapse:collapse; font-size:14px}
+th, td{border-bottom:1px solid #e7e3ea; padding:10px 8px; text-align:left}
+th{color:#6b7280; font-weight:600}
+tr:hover td{background:#faf9fb}
+
+/* Modals */
+.modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(32,41,69,.25); z-index:100}
+.modal.active{display:flex}
+.modal .panel{width:min(780px, 94vw); border-radius:16px; border:1px solid var(--grey);
+  background:#fff; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.steps{display:flex; gap:8px; margin-bottom:10px}
+.step{flex:1; height:6px; border-radius:999px; background:#E5E1E6}
+.step.on{background:linear-gradient(90deg, var(--indigo), var(--red))}
+
+/* Document preview (PDF look) */
+.pdf-page{
+  position:relative;
+  width:min(880px, 92vw); aspect-ratio: 1/1.414; /* ~A4 ratio */
+  background: #fff; color:#111; border:1px solid #ddd; border-radius:8px;
+  box-shadow:0 8px 26px rgba(0,0,0,.12); padding:28px; overflow:auto;
+}
+.pdf-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px}
+
+/* Signature area — centered & contained */
+.sig-area{
+  width:clamp(260px, 70%, 560px);
+  height:140px;
+  margin:0 auto;
+  border:2px dashed #B9B8BB; border-radius:8px;
+  display:flex; align-items:center; justify-content:center; color:#8E8E8E;
+  overflow:hidden; /* keep signature inside */
+}
+.signature-img{
+  display:block;
+  margin:0 auto;
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+}
+
+canvas#sigPad{border:1px dashed #CFCCD0; border-radius:6px; background:#fff}
+
+/* Toasts */
+.toast{
+  position:fixed; right:16px; bottom:16px; background:#202945; color:#fff;
+  padding:10px 14px; border-radius:10px; box-shadow:var(--shadow); display:none; z-index:200;
+}
+.toast.show{display:block}
+
+/* Basma (chat) */
+.chat-fab{position:fixed; right:20px; bottom:20px; z-index:90}
+.chat-fab button{border:none;background:transparent;padding:0;cursor:pointer}
+.chat-fab img{width:56px;height:56px;border-radius:50%;box-shadow:0 6px 16px rgba(0,0,0,.2)}
+.chat-panel{
+  position:fixed; right:20px; bottom:86px; width:340px; border-radius:14px;
+  border:1px solid var(--grey); background:#fff; box-shadow:var(--shadow); display:none; flex-direction:column; overflow:hidden; z-index:95
+}
+.chat-panel header{background:#fff; padding:10px 12px; border-bottom:1px solid var(--grey); display:flex; align-items:center; justify-content:space-between}
+.chat-title{display:flex;align-items:center;gap:8px}
+.chat-title img{width:20px;height:20px}
+.chat-log{height:260px; overflow:auto; padding:10px 12px; display:flex; flex-direction:column; gap:8px}
+.msg{max-width:88%; padding:8px 10px; border-radius:10px; border:1px solid var(--grey)}
+.msg.user{align-self:flex-end; background:#F5F3F5}
+.msg.bot{align-self:flex-start; background:#fff}
+.chat-input{display:flex; gap:8px; padding:10px; border-top:1px solid var(--grey)}
+
+/* Responsive */
+@media (max-width: 1100px){
+  .shell{grid-template-columns: 1fr}
+  aside{position:sticky; top:60px; z-index:40}
+  .kpis{grid-template-columns: repeat(2, 1fr)}
+  .grid.cols-2, .grid.cols-3, .grid.cols-4{grid-template-columns: 1fr}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <img src="https://e.batelco.com/eservices/images/batelco_logo.svg" alt="Batelco by Beyon">
+    <span>— <strong>CLM Demo</strong></span>
+  </div>
+  <div class="actions">
+    <button class="btn" onclick="location.hash='#new'; render('new')">Create</button>
+    <button class="btn btn-solid" onclick="resetDemo()">Reset demo</button>
+  </div>
+</header>
+
+<div class="shell">
+  <aside>
+    <nav>
+      <h5>Journeys</h5>
+      <a href="#dashboard" data-link class="active">🏠 Dashboard</a>
+      <a href="#sourcing" data-link>📨 Sourcing (RFQ)</a>
+      <a href="#approvals" data-link>✅ Approvals</a>
+      <a href="#new" data-link>➕ New</a>
+      <a href="#esign" data-link>✍️ e‑Signature</a>
+      <a href="#search" data-link>🔎 Search & Reports</a>
+    </nav>
+  </aside>
+
+  <main id="view"></main>
+</div>
+
+<!-- Renewal Wizard Modal -->
+<div class="modal" id="renewalModal" aria-hidden="true">
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="margin:6px 0">Renewal — <span id="renewalContractName" style="color:#6b7280"></span></h3>
+      <button class="btn" onclick="closeRenewal()">Close</button>
+    </div>
+    <div class="steps">
+      <div class="step" id="step1"></div>
+      <div class="step" id="step2"></div>
+      <div class="step" id="step3"></div>
+    </div>
+    <div id="wizardBody" class="grid cols-2"></div>
+    <div style="display:flex;justify-content:space-between; align-items:center; margin-top:12px">
+      <div style="color:#6b7280; font-size:12px">SLA: 48h reminder • 3 business days escalate</div>
+      <div>
+        <button class="btn" id="backBtn" onclick="prevStep()">Back</button>
+        <button class="btn btn-solid" id="nextBtn" onclick="nextStep()">Next</button>
+        <button class="btn btn-solid" id="submitBtn" style="display:none" onclick="submitRenewal()">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Contract Wizard Modal -->
+<div class="modal" id="newContractModal" aria-hidden="true">
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="margin:6px 0">Create new contract</h3>
+      <button class="btn" onclick="closeNewContract()">Close</button>
+    </div>
+    <div class="steps">
+      <div class="step" id="ncStep1"></div>
+      <div class="step" id="ncStep2"></div>
+      <div class="step" id="ncStep3"></div>
+    </div>
+    <div id="newContractBody" class="grid cols-2"></div>
+    <div style="display:flex;justify-content:space-between; align-items:center; margin-top:12px">
+      <div style="color:#6b7280; font-size:12px">Standards: header → commercials → governance</div>
+      <div>
+        <button class="btn" id="ncBack" onclick="ncPrev()">Back</button>
+        <button class="btn btn-solid" id="ncNext" onclick="ncNext()">Next</button>
+        <button class="btn btn-solid" id="ncCreate" style="display:none" onclick="ncCreate()">Create draft</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Do Not Renew Modal -->
+<div class="modal" id="dnrModal" aria-hidden="true">
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="margin:6px 0">Will not renew</h3>
+      <button class="btn" onclick="closeDNR()">Close</button>
+    </div>
+    <div class="grid cols-2">
+      <div>
+        <label>Reason</label>
+        <select id="dnrReason">
+          <option>Service discontinued</option>
+          <option>Consolidation with other vendor</option>
+          <option>Commercial terms not favorable</option>
+          <option>Scope no longer required</option>
+        </select>
+      </div>
+      <div>
+        <label>Owner</label>
+        <input id="dnrOwner" placeholder="e.g., Procurement">
+      </div>
+    </div>
+    <div style="text-align:right; margin-top:12px">
+      <button class="btn btn-solid" onclick="confirmDNR()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Signature Modal -->
+<div class="modal" id="signModal" aria-hidden="true">
+  <div class="panel" style="width:min(900px,95vw)">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="margin:6px 0">Preview & sign — <span id="signName" style="color:#6b7280"></span></h3>
+      <button class="btn" onclick="closeSign()">Close</button>
+    </div>
+    <div class="pdf-page" id="pdfMock">
+      <div class="pdf-header">
+        <img src="https://e.batelco.com/eservices/images/batelco_logo.svg" alt="Batelco" style="height:22px">
+        <div style="text-align:right;font-size:12px;color:#666">
+          <div>Contract ID: <span id="signId"></span></div>
+          <div>Date: <span id="signDate"></span></div>
+        </div>
+      </div>
+      <h2 style="margin:6px 0" id="signTitle">Agreement</h2>
+      <p style="color:#444">This is a demonstration preview that mimics a PDF viewer. In production this area renders the actual contract PDF. You can add your signature below to simulate execution.</p>
+      <ul style="color:#333; line-height:1.6">
+        <li><b>Counterparty:</b> <span id="signParty"></span></li>
+        <li><b>Value:</b> <span id="signValue"></span></li>
+        <li><b>Term:</b> <span id="signTerm"></span></li>
+      </ul>
+      <div style="margin:16px 0">
+        <div class="sig-area" id="sigArea">
+          <span>Signature will appear here after you draw & click “Apply signature”.</span>
+        </div>
+      </div>
+      <hr style="border:none;border-top:1px solid #eee;margin:8px 0">
+      <div style="display:flex;gap:12px;align-items:center">
+        <div>
+          <div style="font-size:12px;color:#6b7280;margin-bottom:6px">Draw your signature</div>
+          <canvas id="sigPad" width="420" height="120"></canvas>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px">
+          <button class="btn" onclick="sigClear()">Clear</button>
+          <button class="btn btn-solid" onclick="sigApply()">Apply signature</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Basma chat -->
+<div class="chat-panel" id="chatPanel" role="dialog" aria-label="Ask Basma">
+  <header>
+    <div class="chat-title">
+      <img src="https://www.e.batelco.com/eservices/resources/DashFiles/images/BasmaIcon.svg" alt="Basma">
+      <b>Basma</b>
+    </div>
+    <button class="btn" onclick="toggleChat()">Close</button>
+  </header>
+  <div class="chat-log" id="chatLog"></div>
+  <div class="chat-input">
+    <input id="chatInput" placeholder="Type anything… (demo responses are fixed)" onkeydown="if(event.key==='Enter'){sendChat()}">
+    <button class="btn btn-solid" onclick="sendChat()">Send</button>
+  </div>
+</div>
+<div class="chat-fab">
+  <button aria-label="Open Basma" onclick="toggleChat()">
+    <img src="https://www.e.batelco.com/eservices/resources/DashFiles/images/BasmaIcon.svg" alt="Basma icon">
+  </button>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ======== Demo State (dummy data) ======== */
+const initial = JSON.parse(JSON.stringify({
+  settings: { slaReminderHours: 48, slaEscalateDays: 3, dateFormat: 'DD/MM/YYYY', currency: 'BHD' },
+  approvals: [
+    { id:'appr1', contractId:'C', contractName:'Managed Services Contract', counterparty:'Gamma Services B.S.C.', value: 450000, currency:'BHD', stage:'Pending your approval', deviationScore:'Medium', due:'24/10/2025', status:'Pending' },
+    { id:'appr2', contractId:'H', contractName:'Microsoft Licensing Renewal', counterparty:'SoftTech Gulf W.L.L.', value: 240000, currency:'BHD', stage:'Pending your approval', deviationScore:'Low', due:'26/10/2025', status:'Pending' }
+  ],
+  contracts: [
+    /* --- Originals --- */
+    { id:'A', name:'Network Maintenance Agreement', counterparty:'Supplier Alpha W.L.L.', category:'Network', value:300000, currency:'BHD', start:'01/11/2024', end:'02/11/2025', autoRenew:false, obligations:[{title:'Quarterly Service Review', owner:'Ops Team', due:'15/11/2025'}], status:'Active', risk:'Low', audit:[{ts:ts(), who:'System', what:'Record created'}], renewalDecision:null },
+    { id:'B', name:'Cloud Hosting SOW', counterparty:'Supplier Beta B.S.C.', category:'Cloud', value:120000, currency:'BHD', start:'22/10/2024', end:'22/10/2025', autoRenew:false, obligations:[], status:'Active', risk:'Low', audit:[{ts:ts(), who:'System', what:'Record created'}], renewalDecision:null },
+    { id:'C', name:'Managed Services Contract', counterparty:'Gamma Services B.S.C.', category:'Managed Services', value:450000, currency:'BHD', start:'01/06/2024', end:'01/06/2026', autoRenew:true, obligations:[{title:'Price review window', owner:'Procurement', due:'01/03/2026'}], status:'In review', risk:'Medium', audit:[{ts:ts(), who:'Legal', what:'Sent for approval'}], renewalDecision:null },
+    { id:'D', name:'Data Center Agreement', counterparty:'Delta Data Co.', category:'Data Center', value:900000, currency:'BHD', start:'15/01/2024', end:'15/01/2027', autoRenew:true, obligations:[], status:'Ready to sign', risk:'Low', audit:[{ts:ts(), who:'Owner', what:'Prepared for signature'}], renewalDecision:null },
+
+    /* --- Added to enrich dataset --- */
+    { id:'E', name:'Enterprise Fiber Lease', counterparty:'FiberLink Bahrain W.L.L.', category:'Network', value:550000, currency:'BHD', start:'15/11/2024', end:'15/11/2025', autoRenew:true, obligations:[{title:'Annual Uptime Report', owner:'Network', due:'20/11/2025'}], status:'Active', risk:'Low', audit:[{ts:ts(), who:'Procurement', what:'Negotiated volume discount'}], renewalDecision:null },
+    { id:'F', name:'Cloud Migration Program', counterparty:'CloudWorks B.S.C.', category:'Cloud', value:780000, currency:'BHD', start:'01/08/2024', end:'01/08/2026', autoRenew:false, obligations:[{title:'Phase 2 Cutover', owner:'IT', due:'01/02/2026'}], status:'Executed', risk:'Medium', audit:[{ts:ts(), who:'Legal', what:'Executed & filed certificate'}], renewalDecision:null },
+    { id:'G', name:'SOC as-a-Service', counterparty:'SecureGulf SPC', category:'Security', value:330000, currency:'BHD', start:'05/11/2024', end:'05/11/2025', autoRenew:true, obligations:[{title:'Monthly Threat Report', owner:'CISO', due:'05/11/2025'}], status:'Active', risk:'Medium', audit:[{ts:ts(), who:'CISO', what:'Onboarded monitoring rules'}], renewalDecision:null },
+    { id:'H', name:'Microsoft Licensing Renewal', counterparty:'SoftTech Gulf W.L.L.', category:'Software', value:240000, currency:'BHD', start:'01/03/2025', end:'01/03/2026', autoRenew:false, obligations:[], status:'In review', risk:'Low', audit:[{ts:ts(), who:'IT', what:'Consolidated SKU list'},{ts:ts(), who:'Legal', what:'Deviation: price cap clause'}], renewalDecision:null },
+    { id:'I', name:'Facilities Maintenance', counterparty:'FacilityCare Bahrain', category:'Facilities', value:110000, currency:'BHD', start:'30/04/2025', end:'30/04/2026', autoRenew:true, obligations:[{title:'Q4 Inspection', owner:'Admin', due:'15/12/2025'}], status:'Active', risk:'Low', audit:[{ts:ts(), who:'Admin', what:'Added quarterly inspections'}], renewalDecision:null },
+    { id:'J', name:'Marketing Creative Framework', counterparty:'BrandLab Middle East', category:'Marketing', value:260000, currency:'BHD', start:'01/07/2024', end:'01/07/2026', autoRenew:false, obligations:[], status:'Executed', risk:'Low', audit:[{ts:ts(), who:'Marketing', what:'Executed with 2-year term'}], renewalDecision:null },
+    { id:'K', name:'Consultancy Retainer', counterparty:'Advisors & Co.', category:'Consultancy', value:180000, currency:'BHD', start:'30/10/2024', end:'30/10/2025', autoRenew:false, obligations:[], status:'Active', risk:'Low', audit:[{ts:ts(), who:'Finance', what:'Budget confirmed FY25'}], renewalDecision:null },
+    { id:'L', name:'Equipment Lease — Laptops', counterparty:'TechLease SPC', category:'Equipment Lease', value:220000, currency:'BHD', start:'25/10/2024', end:'25/10/2025', autoRenew:false, obligations:[{title:'Asset return plan', owner:'IT', due:'20/10/2025'}], status:'Active', risk:'Low', audit:[{ts:ts(), who:'IT', what:'Baseline asset list uploaded'}], renewalDecision:null },
+    { id:'M', name:'IoT Connectivity Bundle', counterparty:'ThingsNet Bahrain W.L.L.', category:'IoT', value:150000, currency:'BHD', start:'29/10/2024', end:'29/10/2025', autoRenew:true, obligations:[], status:'Active', risk:'Low', audit:[{ts:ts(), who:'IoT Team', what:'Activated SIM pools'}], renewalDecision:null },
+    { id:'N', name:'Application Support SLA', counterparty:'AppCare Gulf', category:'Software', value:360000, currency:'BHD', start:'01/12/2024', end:'01/12/2025', autoRenew:true, obligations:[{title:'Quarterly KPI Review', owner:'IT', due:'01/10/2025'}], status:'Active', risk:'Low', audit:[{ts:ts(), who:'IT', what:'Onboarded support team'}], renewalDecision:null },
+    { id:'O', name:'Power & Cooling Maintenance', counterparty:'CoolPower Bahrain', category:'Facilities', value:400000, currency:'BHD', start:'15/10/2024', end:'15/10/2027', autoRenew:false, obligations:[], status:'Ready to sign', risk:'Low', audit:[{ts:ts(), who:'Owner', what:'Prepared for signature'}], renewalDecision:null },
+    { id:'P', name:'Recruitment Process Outsourcing', counterparty:'TalentWorks W.L.L.', category:'HR Services', value:200000, currency:'BHD', start:'01/01/2025', end:'01/01/2026', autoRenew:false, obligations:[], status:'Active', risk:'Low', audit:[{ts:ts(), who:'HR', what:'Service levels agreed'}], renewalDecision:null },
+    { id:'Q', name:'Penetration Testing Framework', counterparty:'RedTeam Bahrain', category:'Security', value:90000, currency:'BHD', start:'01/09/2024', end:'01/09/2025', autoRenew:false, obligations:[], status:'Terminated', risk:'Medium', audit:[{ts:ts(), who:'CISO', what:'Terminated — replaced with SOC service'}], renewalDecision:'Do not renew' },
+    { id:'R', name:'Print & Mail Services', counterparty:'MailPro Gulf', category:'Printing', value:130000, currency:'BHD', start:'01/05/2024', end:'01/05/2026', autoRenew:true, obligations:[], status:'Executed', risk:'Low', audit:[{ts:ts(), who:'Procurement', what:'Executed with price cap'}], renewalDecision:null },
+    { id:'S', name:'Payment Gateway Services', counterparty:'PayBridge Middle East', category:'Payments', value:310000, currency:'BHD', start:'10/09/2024', end:'10/09/2026', autoRenew:true, obligations:[], status:'In review', risk:'Medium', audit:[{ts:ts(), who:'Finance', what:'Credit terms under review'}], renewalDecision:null },
+    { id:'T', name:'Warehouse & Logistics', counterparty:'LogistiCo Bahrain', category:'Logistics', value:275000, currency:'BHD', start:'20/11/2024', end:'20/11/2025', autoRenew:false, obligations:[], status:'Active', risk:'Low', audit:[{ts:ts(), who:'Supply Chain', what:'KPI dashboard connected'}], renewalDecision:null },
+    { id:'U', name:'Customer Care Outsourcing', counterparty:'ServiceHub Intl.', category:'Managed Services', value:650000, currency:'BHD', start:'31/12/2024', end:'31/12/2026', autoRenew:false, obligations:[], status:'Out for signature', risk:'Medium', audit:[{ts:ts(), who:'Owner', what:'Sent to supplier for signature'}], renewalDecision:null },
+    { id:'V', name:'Training Services MSA', counterparty:'SkillPlus GCC', category:'Training', value:90000, currency:'BHD', start:'10/11/2024', end:'10/11/2025', autoRenew:true, obligations:[], status:'Active', risk:'Low', audit:[{ts:ts(), who:'HR', what:'Catalogue approved'}], renewalDecision:null },
+    { id:'W', name:'Legal Advisory Panel', counterparty:'LexPartners Bahrain', category:'Legal', value:160000, currency:'BHD', start:'31/03/2025', end:'31/03/2026', autoRenew:false, obligations:[], status:'Active', risk:'Low', audit:[{ts:ts(), who:'Legal', what:'Panel onboarded'}], renewalDecision:null },
+    { id:'X', name:'Data Backup & DR', counterparty:'VaultCloud B.S.C.', category:'Cloud', value:420000, currency:'BHD', start:'28/10/2024', end:'28/10/2025', autoRenew:true, obligations:[{title:'DR Drill', owner:'IT', due:'25/10/2025'}], status:'Active', risk:'Low', audit:[{ts:ts(), who:'IT', what:'Initial backup completed'}], renewalDecision:null },
+    { id:'Y', name:'WAN Optimization', counterparty:'TurboNet ME', category:'Network', value:210000, currency:'BHD', start:'01/07/2025', end:'01/07/2026', autoRenew:false, obligations:[], status:'In review', risk:'Medium', audit:[{ts:ts(), who:'Network', what:'POC results attached'}], renewalDecision:null },
+    { id:'Z', name:'Mobile Handset Supply', counterparty:'HandyTech Trading', category:'Equipment', value:500000, currency:'BHD', start:'01/02/2025', end:'01/02/2026', autoRenew:false, obligations:[], status:'Ready to sign', risk:'Low', audit:[{ts:ts(), who:'Owner', what:'Prepared for signature'}], renewalDecision:null },
+    { id:'AA', name:'Office Cleaning Services', counterparty:'Clean & Care W.L.L.', category:'Facilities', value:95000, currency:'BHD', start:'15/12/2024', end:'15/12/2025', autoRenew:true, obligations:[], status:'Active', risk:'Low', audit:[{ts:ts(), who:'Admin', what:'Site schedule uploaded'}], renewalDecision:null },
+    { id:'AB', name:'Digital Advertising', counterparty:'AdSphere ME', category:'Marketing', value:140000, currency:'BHD', start:'05/11/2024', end:'05/11/2025', autoRenew:false, obligations:[], status:'Active', risk:'Low', audit:[{ts:ts(), who:'Marketing', what:'Flighting plan approved'}], renewalDecision:null },
+    { id:'AC', name:'Secure Email Gateway', counterparty:'MailShield Gulf', category:'Security', value:170000, currency:'BHD', start:'01/04/2024', end:'01/04/2026', autoRenew:true, obligations:[], status:'Executed', risk:'Low', audit:[{ts:ts(), who:'CISO', what:'Executed — certificate attached'}], renewalDecision:null },
+    { id:'AD', name:'CRM SaaS Subscription', counterparty:'CRMWorks B.S.C.', category:'Software', value:280000, currency:'BHD', start:'07/11/2024', end:'07/11/2025', autoRenew:true, obligations:[{title:'Admin training', owner:'Sales Ops', due:'01/11/2025'}], status:'Active', risk:'Low', audit:[{ts:ts(), who:'Sales Ops', what:'Provisioned sandbox'}], renewalDecision:null },
+    { id:'AE', name:'Payroll Processing', counterparty:'PayRollPro', category:'HR Services', value:120000, currency:'BHD', start:'25/11/2024', end:'25/11/2025', autoRenew:true, obligations:[], status:'Active', risk:'Low', audit:[{ts:ts(), who:'HR', what:'Cutover completed'}], renewalDecision:null },
+    { id:'AF', name:'Fleet Management', counterparty:'FleetMax Bahrain', category:'Logistics', value:200000, currency:'BHD', start:'14/11/2024', end:'14/11/2025', autoRenew:false, obligations:[], status:'Active', risk:'Low', audit:[{ts:ts(), who:'Admin', what:'Telematics live'}], renewalDecision:null },
+    { id:'AG', name:'Power Generators Lease', counterparty:'GenLease ME', category:'Facilities', value:260000, currency:'BHD', start:'19/11/2024', end:'19/11/2025', autoRenew:false, obligations:[], status:'Active', risk:'Low', audit:[{ts:ts(), who:'Facilities', what:'Maintenance plan loaded'}], renewalDecision:null },
+    { id:'AH', name:'Video Conferencing Licenses', counterparty:'MeetPro ME', category:'Software', value:80000, currency:'BHD', start:'01/09/2025', end:'01/09/2026', autoRenew:true, obligations:[], status:'In review', risk:'Low', audit:[{ts:ts(), who:'IT', what:'Negotiation started'}], renewalDecision:null },
+    { id:'AI', name:'Field Services Support', counterparty:'OpsPartner W.L.L.', category:'Managed Services', value:190000, currency:'BHD', start:'22/10/2024', end:'22/10/2025', autoRenew:false, obligations:[], status:'Active', risk:'Medium', audit:[{ts:ts(), who:'Operations', what:'Performance review scheduled'}], renewalDecision:null },
+    { id:'AJ', name:'MPLS Backbone Upgrade', counterparty:'BackboneTel B.S.C.', category:'Network', value:620000, currency:'BHD', start:'12/11/2024', end:'12/11/2025', autoRenew:false, obligations:[], status:'Active', risk:'Medium', audit:[{ts:ts(), who:'Network', what:'Phase 1 complete'}], renewalDecision:null }
+  ],
+  sourcing: [] // RFQs
+}));
+let state = JSON.parse(JSON.stringify(initial));
+function ts(){ return new Date().toLocaleString(); }
+
+/* ======== Router & Render ======== */
+const view = document.getElementById('view');
+function attachNavHandlers(){
+  const links = document.querySelectorAll('[data-link]');
+  links.forEach(a=>a.addEventListener('click', (e)=>{
+    e.preventDefault();
+    links.forEach(x=>x.classList.remove('active'));
+    a.classList.add('active');
+    const id = a.getAttribute('href').slice(1);
+    render(id);
+    history.replaceState(null, '', '#'+id);
+  }));
+}
+attachNavHandlers();
+
+function start() {
+  const hash = (location.hash||'#dashboard').slice(1);
+  document.querySelector(`[href="#${hash}"]`)?.classList.add('active');
+  render(hash);
+  bootChat();
+}
+window.addEventListener('load', start);
+
+function render(id){
+  const map = {
+    dashboard: renderDashboard,
+    sourcing: renderSourcing,
+    approvals: renderApprovals,
+    new: renderNew,
+    esign: renderESign,
+    search: renderSearch
+  };
+  (map[id]||renderDashboard)();
+}
+
+function fmtBHD(x){ return 'BHD ' + (x||0).toLocaleString('en-US'); }
+function parseDMY(d){ const [dd,mm,yy] = d.split('/').map(Number); return new Date(yy, mm-1, dd); }
+function daysUntil(d){ const now = new Date(); const dt = parseDMY(d); return Math.ceil((dt - now)/(1000*60*60*24)); }
+function badge(text, cls=''){ return `<span class="badge ${cls}">${text}</span>`; }
+function findContract(id){ return state.contracts.find(c=>c.id===id); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2200); }
+
+/* ======== Dashboard (mini charts) ======== */
+function renderDashboard(){
+  const activeCount = state.contracts.filter(c=>['Active','In review','Pending approval','Ready to sign','Executed','Out for signature'].includes(c.status)).length;
+  const totalValue = state.contracts.reduce((s,c)=>s + (c.value||0), 0);
+  const renewalsDue = getExpiringSoon().length;
+  const approvalsPending = state.approvals.filter(a=>a.status==='Pending').length;
+  view.innerHTML = `
+    <section class="kpis">
+      <div class="tile">
+        <small>Active</small><b>${activeCount}</b>
+        ${spark([15,16,16,18,20,22,24])}
+      </div>
+      <div class="tile">
+        <small>Total value (BHD)</small><b>${fmtBHD(totalValue)}</b>
+        ${spark([450,550,780,900,1020,1180,1250], true)}
+      </div>
+      <div class="tile">
+        <small>Renewals due</small><b>${renewalsDue}</b>
+        ${donut(Math.min(renewalsDue/Math.max(activeCount,1)*100,100), 'Due')}
+      </div>
+      <div class="tile">
+        <small>Approvals pending</small><b>${approvalsPending}</b>
+        ${donut(Math.min(approvalsPending/Math.max(activeCount,1)*100,100), 'Pending')}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h3 style="margin:0">Expiring soon <span style="color:#6b7280; font-size:12px">(120/90/60/30/7/3/1 days)</span></h3>
+          <span style="color:#6b7280">Today: ${new Date().toLocaleDateString()}</span>
+        </div>
+        <div class="list" id="expSoon">
+          ${getExpiringSoon().map(c=> `
+            <div class="row">
+              <div class="meta">
+                <b>${c.name}</b>
+                <span style="color:#6b7280">${c.counterparty} • Ends ${c.end} • ${daysUntil(c.end)} days left</span>
+              </div>
+              <div style="display:flex;gap:8px">
+                ${badge(c.status, 'ok')}
+                <button class="btn btn-solid" onclick="openContract('${c.id}')">View</button>
+              </div>
+            </div>`).join('') || `<div style="color:#6b7280">No expiries within 30 days.</div>`}
+        </div>
+      </div>
+    </section>
+
+    <section class="grid cols-2">
+      <div class="card">
+        <h3 style="margin-top:0">Approvals pending</h3>
+        ${state.approvals.filter(a=>a.status==='Pending').map(a=>`
+          <div class="row">
+            <div class="meta">
+              <b>${a.contractName}</b>
+              <span style="color:#6b7280">${a.counterparty} • ${fmtBHD(a.value)} • ${a.stage}</span>
+            </div>
+            <button class="btn" onclick="renderApprovals('${a.id}')">Review</button>
+          </div>
+        `).join('') || `<div style="color:#6b7280">Nothing pending right now.</div>`}
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Quick actions</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" onclick="openNewContract()">New contract</button>
+          <button class="btn" onclick="location.hash='#new'; render('new')">New NDA</button>
+          <button class="btn" onclick="location.hash='#sourcing'; render('sourcing')">New RFQ</button>
+          <button class="btn" onclick="location.hash='#search'; render('search')">Find contracts</button>
+        </div>
+      </div>
+    </section>
+  `;
+}
+function spark(values, money){
+  const max = Math.max(...values);
+  const pts = values.map((v,i)=>`${(i/(values.length-1))*100},${100 - (v/max*100)}`).join(' ');
+  return `<svg class="spark" viewBox="0 0 100 100" preserveAspectRatio="none">
+    <polyline fill="none" stroke="${money?'#D50037':'#4F55EB'}" stroke-width="3" points="${pts}"></polyline>
+  </svg>`;
+}
+function donut(pct, label){
+  const r=36, c=2*Math.PI*r, val=Math.round((pct/100)*c);
+  return `<svg class="donut" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="${r}" fill="none" stroke="#E5E1E6" stroke-width="10"/>
+    <circle cx="50" cy="50" r="${r}" fill="none" stroke="#4F55EB" stroke-width="10"
+            stroke-dasharray="${val} ${c-val}" transform="rotate(-90 50 50)"/>
+    <text x="50" y="52" text-anchor="middle" font-size="12" fill="#202945">${Math.round(pct)}%</text>
+  </svg>`;
+}
+function getExpiringSoon(){
+  return state.contracts.filter(c=>{
+    const d = daysUntil(c.end);
+    const active = ['Active'].includes(c.status);
+    const soon = d <= 30;
+    const notStopped = c.renewalDecision !== 'Do not renew';
+    return active && soon && notStopped;
+  }).sort((a,b)=> daysUntil(a.end) - daysUntil(b.end)).slice(0,10);
+}
+
+/* ======== Contract Detail ======== */
+let lastContractId = null;
+function openContract(id){
+  lastContractId = id;
+  const c = findContract(id);
+  view.innerHTML = `
+    <div class="grid cols-2">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h3 style="margin:0">${c.name}</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" onclick="renderDashboard()">Back</button>
+            ${['Active','In review'].includes(c.status) ? `<button class="btn btn-solid" onclick="startRenewal('${c.id}')">Start renewal</button>`:''}
+            ${c.status!=='Terminated' ? `<button class="btn" onclick="openDNR('${c.id}')">Will not renew</button>`:''}
+          </div>
+        </div>
+        <hr style="border:none;border-top:1px solid var(--grey);margin:12px 0">
+        <div class="grid cols-2">
+          <div><label>Counterparty</label><div>${c.counterparty}</div></div>
+          <div><label>Category</label><div>${c.category}</div></div>
+          <div><label>Value</label><div>${fmtBHD(c.value)}</div></div>
+          <div><label>Term</label><div>${c.start} → ${c.end} (${daysUntil(c.end)} days left)</div></div>
+          <div><label>Auto‑renew</label><div>${c.autoRenew ? 'On' : 'Off'}</div></div>
+          <div><label>Status</label><div>${badge(c.status, c.status==='Active'?'ok':c.status==='Pending approval'?'warn':c.status==='Terminated'?'danger':'')}</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Audit</h3>
+        <div class="list">
+          ${c.audit.slice().reverse().map(a=>`
+            <div class="row">
+              <div>${a.what}</div>
+              <div style="color:#6b7280; font-size:12px">${a.who} • ${a.ts}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ======== Renewal Wizard ======== */
+let renewal = { step:1, data:{ newEnd:'', newTermMonths:12, newPrice:'', approvers:['Procurement Manager','Legal'], signers:['Supplier rep','Batelco signer'] }, contractId:null };
+function startRenewal(id){
+  renewal = { step:1, data:{ newEnd:'', newTermMonths:12, newPrice:'', approvers:['Procurement Manager','Legal'], signers:['Supplier rep','Batelco signer'] }, contractId:id };
+  document.getElementById('renewalContractName').textContent = findContract(id).name;
+  document.getElementById('renewalModal').classList.add('active');
+  wizardStep();
+}
+function closeRenewal(){ document.getElementById('renewalModal').classList.remove('active'); }
+function wizardStep(){
+  ['step1','step2','step3'].forEach((id,i)=>{ const el = document.getElementById(id); el.className = 'step' + ((i < renewal.step)?' on':''); });
+  const body = document.getElementById('wizardBody');
+  document.getElementById('backBtn').style.display = renewal.step>1?'inline-flex':'none';
+  document.getElementById('nextBtn').style.display = renewal.step<3?'inline-flex':'none';
+  document.getElementById('submitBtn').style.display = renewal.step===3?'inline-flex':'none';
+  if(renewal.step===1){
+    body.innerHTML = `
+      <div>
+        <label>New end date</label>
+        <input id="inpNewEnd" type="date">
+        <div style="font-size:12px;color:#6b7280">Format: ${state.settings.dateFormat}</div>
+      </div>
+      <div>
+        <label>Term length (months)</label>
+        <input id="inpNewTerm" type="number" min="1" value="${renewal.data.newTermMonths}">
+      </div>`;
+  } else if(renewal.step===2){
+    body.innerHTML = `
+      <div>
+        <label>New price (${state.settings.currency})</label>
+        <input id="inpNewPrice" type="number" min="0" placeholder="e.g., 300000">
+      </div>
+      <div>
+        <label>Attach schedule (optional)</label>
+        <input type="file">
+        <div style="font-size:12px;color:#6b7280">Files are not uploaded in demo mode.</div>
+      </div>`;
+  } else {
+    body.innerHTML = `
+      <div>
+        <label>Approvals (auto‑suggested)</label>
+        <div>${renewal.data.approvers.map(a=>badge(a)).join(' ')}</div>
+      </div>
+      <div>
+        <label>Signers</label>
+        <div>${renewal.data.signers.map(a=>badge(a)).join(' ')}</div>
+      </div>`;
+  }
+}
+function nextStep(){
+  if(renewal.step===1){
+    const d = document.getElementById('inpNewEnd').value;
+    const m = document.getElementById('inpNewTerm').value;
+    if(!d){ toast('Please set a new end date'); return;}
+    renewal.data.newEnd = new Date(d);
+    renewal.data.newTermMonths = Number(m||12);
+  }
+  if(renewal.step===2){
+    const p = document.getElementById('inpNewPrice').value;
+    if(!p){ toast('Please set a new price'); return; }
+    renewal.data.newPrice = Number(p);
+  }
+  renewal.step = Math.min(3, renewal.step+1);
+  wizardStep();
+}
+function prevStep(){ renewal.step = Math.max(1, renewal.step-1); wizardStep(); }
+function submitRenewal(){
+  const c = findContract(renewal.contractId);
+  const newEnd = renewal.data.newEnd;
+  const d = `${String(newEnd.getDate()).padStart(2,'0')}/${String(newEnd.getMonth()+1).padStart(2,'0')}/${newEnd.getFullYear()}`;
+  c.end = d; c.value = renewal.data.newPrice || c.value; c.status = 'Pending approval';
+  c.audit.push({ts:ts(), who:'Owner', what:`Renewal submitted: end ${c.end}, value ${fmtBHD(c.value)}`});
+  state.approvals.push({ id:'appr-'+Math.random().toString(36).slice(2,7), contractId:c.id, contractName:c.name, counterparty:c.counterparty, value:c.value, currency:'BHD', stage:'Pending approval', deviationScore:'Low', due:'—', status:'Pending' });
+  closeRenewal(); openContract(c.id); toast('Renewal submitted for approval');
+}
+
+/* ======== Do Not Renew (modal) ======== */
+let dnrTarget = null;
+function openDNR(id){
+  dnrTarget = id;
+  document.getElementById('dnrOwner').value='';
+  document.getElementById('dnrReason').selectedIndex=0;
+  document.getElementById('dnrModal').classList.add('active');
+}
+function closeDNR(){ document.getElementById('dnrModal').classList.remove('active'); }
+function confirmDNR(){
+  const reason = document.getElementById('dnrReason').value;
+  const owner = document.getElementById('dnrOwner').value || 'Unassigned';
+  const c = findContract(dnrTarget);
+  c.renewalDecision = 'Do not renew';
+  c.audit.push({ts:ts(), who:'Owner', what:`Marked Do not renew — reason: ${reason}; owner: ${owner}`});
+  closeDNR(); toast('Decision recorded'); renderDashboard();
+}
+
+/* ======== Approvals ======== */
+function renderApprovals(openId){
+  const pending = state.approvals.filter(a=>a.status==='Pending');
+  const selected = openId ? pending.find(p=>p.id===openId) : pending[0];
+  view.innerHTML = `
+    <div class="grid cols-2">
+      <div class="card">
+        <h3 style="margin-top:0">Pending your approval</h3>
+        <div class="list">
+          ${pending.map(a=>`
+            <div class="row">
+              <div class="meta">
+                <b>${a.contractName}</b>
+                <span style="color:#6b7280">${a.counterparty} • ${fmtBHD(a.value)}</span>
+              </div>
+              <button class="btn" onclick="renderApprovals('${a.id}')">Open</button>
+            </div>
+          `).join('') || `<div style="color:#6b7280">Nothing pending.</div>`}
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Summary</h3>
+        ${selected ? `
+          <div class="grid cols-2">
+            <div><label>Contract</label><div>${selected.contractName}</div></div>
+            <div><label>Counterparty</label><div>${selected.counterparty}</div></div>
+            <div><label>Value</label><div>${fmtBHD(selected.value)}</div></div>
+            <div><label>Deviations</label><div>${badge(selected.deviationScore, selected.deviationScore==='High'?'danger':selected.deviationScore==='Medium'?'warn':'ok')}</div></div>
+            <div><label>SLA</label><div>Reminder 48h • Escalate 3 business days • Auto‑delegate when on leave</div></div>
+          </div>
+          <hr style="border:none;border-top:1px solid var(--grey);margin:12px 0">
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-solid" onclick="approve('${selected.id}')">Approve</button>
+            <button class="btn" onclick="sendBack('${selected.id}')">Send back</button>
+          </div>
+        ` : `<div style="color:#6b7280">Select an item to review.</div>`}
+      </div>
+    </div>`;
+}
+function approve(id){
+  const a = state.approvals.find(x=>x.id===id);
+  if(!a) return;
+  a.status = 'Approved';
+  const c = findContract(a.contractId);
+  if(c){ c.status = 'In progress'; c.audit.push({ts:ts(), who:'Approver', what:'Approved — moved to next step'}); }
+  toast('Approved'); renderApprovals();
+}
+function sendBack(id){
+  const reason = prompt('Add a comment for send back:');
+  const a = state.approvals.find(x=>x.id===id);
+  if(!a) return;
+  a.status = 'Returned';
+  const c = findContract(a.contractId);
+  if(c) c.audit.push({ts:ts(), who:'Approver', what:`Sent back with comment: ${reason||'—'}`});
+  toast('Sent back to previous step'); renderApprovals();
+}
+
+/* ======== New (NDA & Third‑party) + New Contract Wizard ======== */
+let newContract = { step:1, data:{
+  type:'MSA', counterparty:'', category:'Network', owner:'Procurement',
+  value:0, currency:'BHD', start:'', end:'', autoRenew:false, payment:'30 days',
+  approvers:['Procurement Manager','Legal'], signers:['Supplier rep','Batelco signer'], notes:''
+}};
+
+function renderNew(){
+  view.innerHTML = `
+    <div class="grid cols-2">
+      <div class="card">
+        <h3 style="margin-top:0">New contract</h3>
+        <p style="color:#6b7280;margin-top:-6px">Standards‑based creation: Header → Commercials → Governance</p>
+        <button class="btn btn-solid" onclick="openNewContract()">Start new contract</button>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Self‑service NDA</h3>
+        <div class="grid cols-2">
+          <div><label>Counterparty name</label><input id="ndaName" placeholder="e.g., Supplier Z W.L.L."></div>
+          <div><label>Counterparty email</label><input id="ndaEmail" type="email" placeholder="name@example.com"></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn" onclick="generateNDA()">Generate</button>
+          <button class="btn btn-solid" id="ndaSend" style="display:none" onclick="sendNDA()">Send for e‑signature</button>
+        </div>
+        <div id="ndaStatus" style="font-size:12px;color:#6b7280;margin-top:8px"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Upload third‑party paper</h3>
+        <div class="grid cols-2">
+          <div>
+            <label>Upload file</label>
+            <input type="file">
+            <div style="font-size:12px;color:#6b7280">Files not uploaded in demo.</div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:#6b7280">Extraction (demo)</div>
+            <div class="row" id="extractBox">
+              <div class="meta"><b>—</b><span style="color:#6b7280">Click “Extract fields” to simulate</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn" onclick="extractFields()">Extract fields</button>
+          <button class="btn btn-solid" id="routeLegal" style="display:none" onclick="routeForLegal()">Route for legal review</button>
+        </div>
+      </div>
+    </div>`;
+}
+function openNewContract(){
+  newContract = { step:1, data:{
+    type:'MSA', counterparty:'', category:'Network', owner:'Procurement',
+    value:0, currency:'BHD', start:'', end:'', autoRenew:false, payment:'30 days',
+    approvers:['Procurement Manager','Legal'], signers:['Supplier rep','Batelco signer'], notes:''
+  }};
+  document.getElementById('newContractModal').classList.add('active');
+  ncStep();
+}
+function closeNewContract(){ document.getElementById('newContractModal').classList.remove('active'); }
+function ncStep(){
+  ['ncStep1','ncStep2','ncStep3'].forEach((id,i)=>{ const el = document.getElementById(id); el.className = 'step' + ((i < newContract.step)?' on':''); });
+  const body = document.getElementById('newContractBody');
+  document.getElementById('ncBack').style.display = newContract.step>1?'inline-flex':'none';
+  document.getElementById('ncNext').style.display = newContract.step<3?'inline-flex':'none';
+  document.getElementById('ncCreate').style.display = newContract.step===3?'inline-flex':'none';
+  if(newContract.step===1){
+    body.innerHTML = `
+      <div>
+        <label>Contract type</label>
+        <select id="ncType">
+          <option>MSA</option><option>Services</option><option>PO Terms</option><option>NDA</option>
+        </select>
+      </div>
+      <div>
+        <label>Counterparty</label>
+        <input id="ncParty" placeholder="e.g., New Supplier SPC">
+      </div>
+      <div>
+        <label>Category</label>
+        <select id="ncCat"><option>Network</option><option>Cloud</option><option>Managed Services</option><option>Data Center</option><option>Software</option></select>
+      </div>
+      <div>
+        <label>Owner</label>
+        <select id="ncOwner"><option>Procurement</option><option>Legal</option><option>Finance</option></select>
+      </div>`;
+  } else if(newContract.step===2){
+    body.innerHTML = `
+      <div>
+        <label>Value (${state.settings.currency})</label>
+        <input id="ncValue" type="number" min="0" placeholder="e.g., 150000">
+      </div>
+      <div>
+        <label>Payment terms</label>
+        <select id="ncPay"><option>30 days</option><option>45 days</option><option>60 days</option></select>
+      </div>
+      <div>
+        <label>Start date</label>
+        <input id="ncStart" type="date">
+      </div>
+      <div>
+        <label>End date</label>
+        <input id="ncEnd" type="date">
+      </div>
+      <div>
+        <label>Auto‑renew</label>
+        <select id="ncAuto"><option value="no">Off</option><option value="yes">On</option></select>
+      </div>
+      <div>
+        <label>Notes</label>
+        <textarea id="ncNotes" placeholder="Key scope, SLAs, deliverables…"></textarea>
+      </div>`;
+  } else {
+    body.innerHTML = `
+      <div>
+        <label>Approvals (auto‑suggested)</label>
+        <div>${['Procurement Manager','Legal'].map(a=>badge(a)).join(' ')}</div>
+      </div>
+      <div>
+        <label>Signers</label>
+        <div>${['Supplier rep','Batelco signer'].map(a=>badge(a)).join(' ')}</div>
+      </div>
+      <div class="grid cols-2" style="margin-top:6px">
+        <div class="card">
+          <b>Summary</b>
+          <div id="ncSummary" style="font-size:14px; color:#333; margin-top:6px"></div>
+        </div>
+        <div class="card">
+          <b>Attachments (optional)</b>
+          <input type="file">
+          <div style="font-size:12px;color:#6b7280;margin-top:6px">Files are not uploaded in demo mode.</div>
+        </div>
+      </div>`;
+      setTimeout(()=>{
+        const s = document.getElementById('ncSummary');
+        if(s){
+          s.innerHTML = `<ul>
+            <li>Type: ${document.getElementById('ncType')?.value||newContract.data.type}</li>
+            <li>Counterparty: ${document.getElementById('ncParty')?.value||'—'}</li>
+            <li>Category: ${document.getElementById('ncCat')?.value||newContract.data.category}</li>
+            <li>Value: ${fmtBHD(Number(document.getElementById('ncValue')?.value||0))} • Payment: ${document.getElementById('ncPay')?.value||'30 days'}</li>
+            <li>Term: ${formatDate(document.getElementById('ncStart')?.value)} → ${formatDate(document.getElementById('ncEnd')?.value)} • Auto‑renew: ${(document.getElementById('ncAuto')?.value||'no')==='yes'?'On':'Off'}</li>
+          </ul>`;
+        }
+      },0);
+  }
+}
+function formatDate(val){ if(!val) return '—'; const d=new Date(val); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; }
+function ncNext(){
+  if(newContract.step===1){
+    newContract.data.type = document.getElementById('ncType').value;
+    newContract.data.counterparty = document.getElementById('ncParty').value.trim();
+    if(!newContract.data.counterparty){ toast('Please enter a counterparty'); return; }
+    newContract.data.category = document.getElementById('ncCat').value;
+    newContract.data.owner = document.getElementById('ncOwner').value;
+  }
+  if(newContract.step===2){
+    newContract.data.value = Number(document.getElementById('ncValue').value||0);
+    newContract.data.payment = document.getElementById('ncPay').value;
+    newContract.data.start = document.getElementById('ncStart').value;
+    newContract.data.end = document.getElementById('ncEnd').value;
+    if(!newContract.data.start || !newContract.data.end){ toast('Please set start and end dates'); return; }
+    newContract.data.autoRenew = document.getElementById('ncAuto').value==='yes';
+    newContract.data.notes = document.getElementById('ncNotes').value;
+  }
+  newContract.step = Math.min(3, newContract.step+1);
+  ncStep();
+}
+function ncPrev(){ newContract.step = Math.max(1, newContract.step-1); ncStep(); }
+function ncCreate(){
+  const id = Math.random().toString(36).slice(2,6).toUpperCase();
+  const start = newContract.data.start ? formatDate(newContract.data.start) : '—';
+  const end = newContract.data.end ? formatDate(newContract.data.end) : '—';
+  state.contracts.push({
+    id, name:`${newContract.data.type} — ${newContract.data.category}`, counterparty:newContract.data.counterparty,
+    category:newContract.data.category, value:newContract.data.value, currency:newContract.data.currency||'BHD',
+    start, end, autoRenew:newContract.data.autoRenew, obligations:[], status:'In review', risk:'Low',
+    audit:[{ts:ts(), who:'Owner', what:'Draft created via wizard'}, {ts:ts(), who:'System', what:`Value ${fmtBHD(newContract.data.value)}; Payment ${newContract.data.payment}`}],
+    renewalDecision:null
+  });
+  closeNewContract();
+  toast('Draft created and routed for review'); renderSearch();
+}
+function generateNDA(){
+  const n = document.getElementById('ndaName').value.trim();
+  const e = document.getElementById('ndaEmail').value.trim();
+  if(!n || !e){ toast('Enter counterparty name & email'); return; }
+  document.getElementById('ndaStatus').textContent = `Generated NDA for ${n} (${e}).`;
+  document.getElementById('ndaSend').style.display = 'inline-flex';
+}
+function sendNDA(){ document.getElementById('ndaStatus').textContent = 'Status: Out for signature (demo)'; toast('NDA sent for e‑signature'); }
+function extractFields(){
+  const demo = {Vendor:'Vendor Omega SPC', Start:'01/11/2025', End:'01/05/2027', Notice:'60 days', Value:'BHD 150,000', Currency:'BHD', Category:'Software', Owner:'Procurement'};
+  const box = document.getElementById('extractBox');
+  box.innerHTML = `<div class="meta">
+    <b>${demo.Vendor}</b>
+    <span style="color:#6b7280">Start ${demo.Start} → End ${demo.End} • ${demo.Value}</span>
+    <span>${badge('Deviation: Indemnity modified','warn')} ${badge('Missing: DPA','danger')}</span>
+  </div>`;
+  document.getElementById('routeLegal').style.display='inline-flex';
+}
+function routeForLegal(){ toast('Routed for legal review'); }
+
+/* ======== e‑Signature with preview & signature pad ======== */
+let signingId = null;
+function renderESign(){
+  const ready = state.contracts.filter(c=>c.status==='Ready to sign' || c.status==='Out for signature');
+  view.innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0">Signing queue</h3>
+      ${ready.map(c=>`
+        <div class="row">
+          <div class="meta"><b>${c.name}</b><span style="color:#6b7280">${c.counterparty} • ${fmtBHD(c.value)} • ${c.status}</span></div>
+          <div style="display:flex;gap:8px">
+            ${c.status==='Ready to sign' ? `<select id="order-${c.id}"><option value="ext-int">External → Internal</option><option value="int-ext">Internal → External</option></select>`:''}
+            ${c.status==='Ready to sign' ? `<button class="btn" onclick="sendForSign('${c.id}')">Send</button>`:''}
+            <button class="btn btn-solid" onclick="openSign('${c.id}')">${c.status==='Ready to sign'?'Preview':'Open'}</button>
+          </div>
+        </div>
+      `).join('') || `<div style="color:#6b7280">No documents are ready.</div>`}
+    </div>`;
+}
+function sendForSign(id){
+  const c = findContract(id);
+  c.status = 'Out for signature';
+  c.audit.push({ts:ts(), who:'Owner', what:`Sent for e‑signature (order: ${document.getElementById('order-'+id).value})`});
+  toast('Sent for signature'); renderESign();
+}
+function openSign(id){
+  const c = findContract(id);
+  signingId = id;
+  document.getElementById('signName').textContent = c.name;
+  document.getElementById('signId').textContent = c.id;
+  document.getElementById('signDate').textContent = new Date().toLocaleDateString();
+  document.getElementById('signTitle').textContent = c.name;
+  document.getElementById('signParty').textContent = c.counterparty;
+  document.getElementById('signValue').textContent = fmtBHD(c.value);
+  document.getElementById('signTerm').textContent = `${c.start} → ${c.end}`;
+  document.getElementById('signModal').classList.add('active');
+  sigInit();
+}
+function closeSign(){ document.getElementById('signModal').classList.remove('active'); signingId = null; }
+let drawing=false, ctx=null, pad=null;
+function sigInit(){
+  pad = document.getElementById('sigPad');
+  ctx = pad.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,pad.width,pad.height);
+  ctx.lineWidth = 2; ctx.strokeStyle = '#202945'; ctx.lineCap='round';
+  pad.onmousedown = e=>{drawing=true; ctx.beginPath(); ctx.moveTo(e.offsetX,e.offsetY)};
+  pad.onmousemove = e=>{ if(drawing){ ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke(); }};
+  pad.onmouseup = ()=> drawing=false;
+  pad.onmouseleave = ()=> drawing=false;
+  // touch
+  pad.addEventListener('touchstart', e=>{e.preventDefault(); const t=e.touches[0]; const r=pad.getBoundingClientRect(); drawing=true; ctx.beginPath(); ctx.moveTo(t.clientX-r.left, t.clientY-r.top);});
+  pad.addEventListener('touchmove', e=>{e.preventDefault(); if(!drawing) return; const t=e.touches[0]; const r=pad.getBoundingClientRect(); ctx.lineTo(t.clientX-r.left, t.clientY-r.top); ctx.stroke();});
+  pad.addEventListener('touchend', ()=> drawing=false);
+}
+function sigClear(){ if(!ctx) return; ctx.clearRect(0,0,pad.width,pad.height); ctx.fillStyle='#fff'; ctx.fillRect(0,0,pad.width,pad.height); }
+function sigApply(){
+  if(!signingId) return;
+  const area = document.getElementById('sigArea');
+  const img = new Image();
+  img.src = pad.toDataURL('image/png');
+  img.className = 'signature-img';
+  area.innerHTML = '';
+  area.appendChild(img);
+
+  const c = findContract(signingId);
+  c.status = 'Executed';
+  c.audit.push({ts:ts(), who:'Signer', what:'Signed via e‑signature (demo). Executed PDF + certificate stored.'});
+  toast('Signature applied • Status: Executed');
+  closeSign(); renderESign();
+}
+
+/* ======== Search ======== */
+function renderSearch(){
+  const parties = [...new Set(state.contracts.map(c=>c.counterparty))];
+  view.innerHTML = `
+    <div class="card">
+      <h3 style="margin-top:0">Search & Reports</h3>
+      <div class="grid cols-4">
+        <div><label>Party</label><select id="fParty"><option value="">Any</option>${parties.map(p=>`<option>${p}</option>`).join('')}</select></div>
+        <div><label>Value > (BHD)</label><input id="fValue" type="number" placeholder="50000"></div>
+        <div><label>Expires in < (days)</label><input id="fDays" type="number" placeholder="90"></div>
+        <div><label>Auto‑renew</label>
+          <select id="fAuto"><option value="">Any</option><option value="yes">On</option><option value="no">Off</option></select>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="btn btn-solid" onclick="runSearch()">Run</button>
+        <button class="btn" onclick="exportCSV()">Export CSV</button>
+      </div>
+      <div id="searchResults" style="margin-top:12px"></div>
+    </div>`;
+}
+function runSearch(){
+  const party = document.getElementById('fParty').value;
+  const min = Number(document.getElementById('fValue').value||0);
+  const days = Number(document.getElementById('fDays').value||9999);
+  const auto = document.getElementById('fAuto').value;
+  const results = state.contracts.filter(c=>{
+    const passParty = !party || c.counterparty===party;
+    const passVal = (c.value||0) > min;
+    const passDays = daysUntil(c.end) < days;
+    const passAuto = auto==='' || (auto==='yes'?c.autoRenew:!c.autoRenew);
+    return passParty && passVal && passDays && passAuto;
+  });
+  const box = document.getElementById('searchResults');
+  box.innerHTML = `
+    <table>
+      <thead><tr><th>Contract</th><th>Party</th><th>End</th><th>Value</th><th>Auto‑renew</th><th>Status</th></tr></thead>
+      <tbody>${results.map(c=>`<tr>
+        <td><a href="#" onclick="openContract('${c.id}')">${c.name}</a></td>
+        <td>${c.counterparty}</td><td>${c.end}</td><td>${fmtBHD(c.value)}</td><td>${c.autoRenew?'On':'Off'}</td><td>${c.status}</td>
+      </tr>`).join('')||`<tr><td colspan="6" style="color:#6b7280">No results.</td></tr>`}
+      </tbody>
+    </table>`;
+}
+function exportCSV(){
+  const rows = [['Contract','Party','End','Value (BHD)','Auto‑renew','Status']].concat(
+    state.contracts.map(c=>[c.name,c.counterparty,c.end,c.value,c.autoRenew?'On':'Off',c.status])
+  );
+  const csv = rows.map(r=>r.join(',')).join('\\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'clm-demo-export.csv'; a.click(); URL.revokeObjectURL(url);
+}
+
+/* ======== Sourcing (RFQ / Mini-bid) ======== */
+let rfqDraft = { title:'', description:'', category:'Network', budget:0, due:'', selected:[] };
+function renderSourcing(){
+  view.innerHTML = `
+    <div class="grid cols-2">
+      <div class="card">
+        <h3 style="margin-top:0">New sourcing request (RFQ)</h3>
+        <div class="grid cols-2">
+          <div><label>Request title</label><input id="rfqTitle" placeholder="e.g., Network devices refresh"></div>
+          <div><label>Bid due date</label><input id="rfqDue" type="date"></div>
+          <div class="grid cols-1" style="grid-column:1/-1">
+            <label>Describe the requirement</label>
+            <textarea id="rfqDesc" placeholder="Free‑text. Example: Need network equipment and 24/7 support. Budget BHD 120,000. Category Network. SLA 99.9% uptime."></textarea>
+          </div>
+          <div>
+            <label>Category</label>
+            <select id="rfqCat">
+              <option>Network</option><option>Cloud</option><option>Data Center</option><option>Managed Services</option><option>Software</option><option>Security</option><option>Facilities</option><option>Logistics</option><option>Marketing</option>
+            </select>
+          </div>
+          <div>
+            <label>Budget (BHD)</label>
+            <input id="rfqBudget" type="number" min="0" placeholder="e.g., 120000">
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" onclick="rfqAnalyse()">Analyse with AI (demo)</button>
+          <button class="btn btn-solid" onclick="rfqSuggest()">Suggest suppliers</button>
+        </div>
+        <div id="rfqInsights" style="font-size:12px;color:#6b7280;margin-top:8px"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Suggested suppliers (from active/executed contracts)</h3>
+        <div id="rfqVendors" class="list">
+          <div style="color:#6b7280">Run “Suggest suppliers” to see up to 3 matches by category.</div>
+        </div>
+        <div style="margin-top:12px;text-align:right">
+          <button class="btn btn-solid" onclick="rfqSend()">Send RFQ to selected</button>
+        </div>
+      </div>
+      <div class="card" style="grid-column:1/-1">
+        <h3 style="margin-top:0">Open RFQs</h3>
+        <div id="rfqOpenList">${renderRFQList()}</div>
+      </div>
+    </div>`;
+}
+function rfqAnalyse(){
+  const text = document.getElementById('rfqDesc').value.toLowerCase();
+  const cat = /data\s*center/.test(text) ? 'Data Center' :
+              /managed/.test(text) ? 'Managed Services' :
+              /cloud/.test(text) ? 'Cloud' : /network/.test(text) ? 'Network' :
+              /security/.test(text) ? 'Security' :
+              /software|app|license/.test(text) ? 'Software' :
+              /logistics|warehouse/.test(text) ? 'Logistics' :
+              /facilit/.test(text) ? 'Facilities' :
+              /market/.test(text) ? 'Marketing' :
+              document.getElementById('rfqCat').value;
+  const budgetMatch = text.match(/bhd\s*([\d,]+)/i) || text.match(/([\d,]+)\s*bhd/i);
+  const budget = budgetMatch ? Number(budgetMatch[1].replace(/,/g,'')) : (Number(document.getElementById('rfqBudget').value)||0);
+  document.getElementById('rfqCat').value = cat;
+  if(budget) document.getElementById('rfqBudget').value = budget;
+  document.getElementById('rfqInsights').textContent = `AI extracted: Category = ${cat}${budget?`, Budget ≈ BHD ${budget.toLocaleString('en-US')}`:''}.`;
+}
+function rfqSuggest(){
+  const cat = document.getElementById('rfqCat').value;
+  const candidates = state.contracts.filter(c=>(c.category===cat) && (c.status==='Active' || c.status==='Executed')).slice(0,3);
+  const box = document.getElementById('rfqVendors');
+  if(!candidates.length){ box.innerHTML = `<div style="color:#6b7280">No active/executed contracts found for ${cat}.</div>`; return; }
+  rfqDraft.selected = []; // reset
+  box.innerHTML = candidates.map(c=>`
+    <div class="row">
+      <div class="meta">
+        <b>${c.counterparty}</b>
+        <span style="color:#6b7280">${c.name} • ${fmtBHD(c.value)} • Ends ${c.end}</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label style="font-size:12px;color:#6b7280;display:flex;align-items:center;gap:6px">
+          <input type="checkbox" onchange="rfqToggle('${c.counterparty}', this.checked)"> Select
+        </label>
+      </div>
+    </div>
+  `).join('');
+}
+function rfqToggle(vendor, on){
+  if(on){ if(!rfqDraft.selected.includes(vendor)) rfqDraft.selected.push(vendor); }
+  else{ rfqDraft.selected = rfqDraft.selected.filter(v=>v!==vendor); }
+}
+function rfqSend(){
+  const title = document.getElementById('rfqTitle').value.trim() || 'Untitled RFQ';
+  const cat = document.getElementById('rfqCat').value;
+  const due = document.getElementById('rfqDue').value;
+  const budget = Number(document.getElementById('rfqBudget').value||0);
+  if(!rfqDraft.selected.length){ toast('Select at least one supplier'); return; }
+  if(!due){ toast('Set a bid due date'); return; }
+  const id = 'RFQ-'+Math.random().toString(36).slice(2,6).toUpperCase();
+  const items = rfqDraft.selected.map(v=>({ vendor:v, status:'Sent', bid:null }));
+  state.sourcing.push({ id, title, category:cat, due, budget, items, status:'RFQ Sent' });
+  toast(`RFQ sent to ${rfqDraft.selected.length} supplier(s)`);
+  renderSourcing();
+}
+function renderRFQList(){
+  if(!state.sourcing.length) return `<div style="color:#6b7280">No open RFQs.</div>`;
+  return state.sourcing.map(r=>`
+    <div class="row" style="align-items:flex-start">
+      <div class="meta" style="flex:1">
+        <b>${r.title}</b>
+        <span style="color:#6b7280">ID ${r.id} • ${r.category} • Budget ${fmtBHD(r.budget)} • Bids due ${formatDate(r.due)}</span>
+        <div style="margin-top:8px">${renderRFQItems(r)}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-direction:column">
+        <button class="btn" onclick="rfqCompare('${r.id}')">Compare bids</button>
+        <button class="btn" onclick="rfqClose('${r.id}')">Close RFQ</button>
+      </div>
+    </div>
+  `).join('');
+}
+function renderRFQItems(r){
+  return r.items.map((it,i)=>`
+    <div class="row" style="margin-top:6px">
+      <div class="meta">
+        <b>${it.vendor}</b>
+        <span style="color:#6b7280">Status: ${it.status}${it.bid?` • Bid ${fmtBHD(it.bid)}`:''}</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="rfqMarkBid('${r.id}', ${i})">Mark bid received</button>
+      </div>
+    </div>
+  `).join('');
+}
+function rfqMarkBid(rid, idx){
+  const r = state.sourcing.find(x=>x.id===rid);
+  const val = prompt('Enter bid amount (BHD):');
+  const num = Number(val||0);
+  if(!num){ toast('Invalid amount'); return; }
+  r.items[idx].bid = num; r.items[idx].status = 'Received';
+  toast('Bid recorded'); renderSourcing();
+}
+function rfqCompare(rid){
+  const r = state.sourcing.find(x=>x.id===rid);
+  const rows = r.items.map(it=>({ vendor: it.vendor, bid: it.bid || 0 }));
+  if(rows.every(x=>!x.bid)){ toast('No bids yet'); return; }
+  const best = rows.filter(x=>x.bid>0).sort((a,b)=>a.bid-b.bid)[0];
+  const table = `
+    <table>
+      <thead><tr><th>Vendor</th><th>Bid (BHD)</th><th>Action</th></tr></thead>
+      <tbody>
+        ${rows.map(x=>`<tr>
+          <td>${x.vendor}</td>
+          <td>${x.bid?fmtBHD(x.bid):'—'}</td>
+          <td>${x.bid?`<button class="btn btn-solid" onclick="rfqAward('${rid}','${x.vendor}',${x.bid})">Award</button>`:'—'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    <div style="margin-top:6px;color:#6b7280">${best?`Lowest bid highlighted via the Award button.`:'Waiting for bids…'}</div>
+  `;
+  const box = document.getElementById('rfqOpenList');
+  const wrap = document.createElement('div'); wrap.className='card'; wrap.style.marginTop='12px'; wrap.innerHTML = `<b>Compare bids — ${r.id}</b>${table}`;
+  box.parentNode.insertBefore(wrap, box.nextSibling);
+}
+function rfqAward(rid, vendor, amount){
+  const r = state.sourcing.find(x=>x.id===rid);
+  r.status = 'Awarded';
+  toast(`Awarded to ${vendor} for ${fmtBHD(amount)} — creating Work Order draft`);
+  // Create child contract (SOW/WO) from RFQ
+  const id = 'WO-'+Math.random().toString(36).slice(2,6).toUpperCase();
+  const today = new Date(); const nextYear = new Date(); nextYear.setFullYear(today.getFullYear()+1);
+  const start = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
+  const end = `${String(nextYear.getDate()).padStart(2,'0')}/${String(nextYear.getMonth()+1).padStart(2,'0')}/${nextYear.getFullYear()}`;
+  state.contracts.push({
+    id, name:`Work Order — ${r.category}`, counterparty:vendor, category:r.category, value:amount, currency:'BHD',
+    start, end, autoRenew:false, obligations:[], status:'In review', risk:'Low',
+    audit:[{ts:ts(), who:'Owner', what:`Created from RFQ ${r.id} — ${fmtBHD(amount)}`}], renewalDecision:null
+  });
+  renderSourcing();
+}
+function rfqClose(rid){
+  const r = state.sourcing.find(x=>x.id===rid); r.status='Closed'; toast('RFQ closed'); renderSourcing();
+}
+
+/* ======== Basma chat (icon button + deterministic replies) ======== */
+let chatOpen = false, chatTurn = 0;
+function toggleChat(){
+  chatOpen = !chatOpen;
+  document.getElementById('chatPanel').style.display = chatOpen ? 'flex' : 'none';
+  if(chatOpen){ setTimeout(()=>document.getElementById('chatInput').focus(), 100); }
+}
+function bootChat(){
+  const log = document.getElementById('chatLog'); if(!log) return;
+  log.innerHTML = `<div class="msg bot">Hello. I’m <b>Basma</b>. I’ll provide a concise summary for your first two questions in a fixed order for demo purposes.</div>`;
+}
+function sendChat(){
+  const input = document.getElementById('chatInput'); const text = input.value.trim(); if(!text) return;
+  const log = document.getElementById('chatLog'); log.innerHTML += `<div class="msg user">${text}</div>`;
+  let reply = '';
+  if(chatTurn === 0){
+    reply = "For Company X, the primary agreement is scheduled to expire on <b>02/11/2025</b>. You can open the agreement from Expiring Soon and start a renewal, or record a non‑renewal decision with a reason and owner.";
+  } else if(chatTurn === 1){
+    reply = "The total contract value is <b>BHD 300,000</b>. This reflects the latest approved commercial terms in the system.";
+  } else {
+    reply = "This is a guided demo. For additional queries, open the contract record to view obligations, approvals, and audit details.";
+  }
+  chatTurn++;
+  log.innerHTML += `<div class="msg bot">${reply} ${chatTurn===2?`<span class="badge" style="cursor:pointer" onclick="openContract('A')">Open contract A</span>`:''}</div>`;
+  log.scrollTop = log.scrollHeight; input.value='';
+}
+
+/* ======== Reset ======== */
+function resetDemo(){
+  state = JSON.parse(JSON.stringify(initial));
+  render('dashboard'); toast('Demo reset');
+  ['renewalModal','newContractModal','dnrModal','signModal'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('chatPanel').style.display = 'none';
+  chatTurn = 0;
+}
+</script>
+</body>
+</html>
